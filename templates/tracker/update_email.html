@@ -1,0 +1,30 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Update Email - Budget Buddy{% endblock %}
+
+{% block content %}
+<div class="flex justify-center">
+    <div class="w-full max-w-xl">
+        <div class="custom-card">
+            <div class="custom-card-header bg-primary text-white">
+                <h4 class="text-xl font-semibold">Update Email</h4>
+            </div>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="email" class="form-label">New Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="flex items-center justify-between mt-6">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-envelope mr-2"></i>Update Email
+                    </button>
+                    <a href="{% url 'profile' %}" class="btn btn-secondary">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

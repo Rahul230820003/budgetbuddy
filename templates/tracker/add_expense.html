@@ -1,0 +1,51 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Add Expense - Income Tracker{% endblock %}
+
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Add Expense</h2>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="amount" class="block text-sm font-medium text-gray-700">Amount (₹)</label>
+                <input type="number" step="0.01" name="amount" id="amount" required 
+                class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <input type="text" name="description" id="description" required 
+                    class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+            </div>
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select name="category" id="category" required 
+                    class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                    <option value="">Select a category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                    Need a new category? <a href="{% url 'manage_categories' %}" class="text-blue-600 hover:text-blue-800">Manage Categories</a>
+                </p>
+            </div>
+            <div>
+                <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                <input type="date" name="date" id="date" 
+                    class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+            </div>
+            <div class="flex space-x-4">
+                <button type="submit" class="flex-1 bg-red-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+                    Add Expense
+                </button>
+                <a href="{% url 'dashboard' %}" class="flex-1 bg-gray-500 text-white text-center font-semibold px-4 py-2 rounded-md hover:bg-gray-600 transition-colors">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

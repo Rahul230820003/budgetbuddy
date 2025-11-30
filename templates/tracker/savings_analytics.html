@@ -1,0 +1,331 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Savings Goal Analytics - Income Tracker{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Savings Goal Analytics</h1>
+    <p class="text-gray-600">Track your progress towards financial goals and analyze your saving patterns.</p>
+</div>
+
+<!-- Summary Statistics -->
+<div class="grid md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-blue-600 text-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-2">Active Goals</h3>
+        <p class="text-3xl font-bold">{{ active_goals_count }}</p>
+    </div>
+    <div class="bg-green-600 text-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-2">Total Saved</h3>
+        <p class="text-3xl font-bold">₹{{ total_saved }}</p>
+    </div>
+    <div class="bg-purple-600 text-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-2">Monthly Commitment</h3>
+        <p class="text-3xl font-bold">₹{{ total_monthly }}</p>
+    </div>
+    <div class="bg-orange-600 text-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold mb-2">Remaining to Goal</h3>
+        <p class="text-3xl font-bold">₹{{ total_remaining }}</p>
+    </div>
+</div>
+
+<!-- Main Charts -->
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+    <!-- Progress by Goal Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Progress by Goal</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="goalProgressChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Savings Timeline Chart -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Savings Growth Timeline</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="savingsTimelineChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Insights -->
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+    <!-- Auto-Debit Schedule -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Auto-Debit Schedule</h3>
+        {% if auto_debit_goals %}
+            <div class="space-y-4">
+                {% for goal_info in auto_debit_goals %}
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <h3 class="font-medium text-gray-900">{{ goal_info.goal.name }}</h3>
+                        <div class="mt-2 text-sm text-gray-600">
+                            Next debit in {{ goal_info.days_until_next_debit }} days
+                            (₹{{ goal_info.goal.monthly_contribution }})
+                        </div>
+                        <div class="mt-2">
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 rounded-full h-2"
+                                     style="width: {{ goal_info.goal.percentage_complete }}%">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-500">
+                            Progress: {{ goal_info.goal.percentage_complete }}%
+                            (₹{{ goal_info.goal.current_amount }} of ₹{{ goal_info.goal.target_amount }})
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600">No auto-debit goals configured.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Completion Forecast -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Completion Forecast</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="completionForecastChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Goal Completion Calendar - Monthly View -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">Monthly Auto-Debit Calendar</h3>
+        <div class="flex items-center space-x-4">
+            <!-- Month Navigation -->
+            <button id="prevMonth" class="text-gray-600 hover:text-gray-900">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="currentMonth" class="text-sm font-medium">January 2024</span>
+            <button id="nextMonth" class="text-gray-600 hover:text-gray-900">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="calendarContainer">
+        <div class="grid grid-cols-7 gap-1">
+            <div class="text-center p-2 font-medium text-gray-600">Mon</div>
+            <div class="text-center p-2 font-medium text-gray-600">Tue</div>
+            <div class="text-center p-2 font-medium text-gray-600">Wed</div>
+            <div class="text-center p-2 font-medium text-gray-600">Thu</div>
+            <div class="text-center p-2 font-medium text-gray-600">Fri</div>
+            <div class="text-center p-2 font-medium text-gray-600">Sat</div>
+            <div class="text-center p-2 font-medium text-gray-600">Sun</div>
+            
+            <div id="calendarDays" class="grid grid-cols-7 col-span-7 gap-1">
+                <!-- Calendar days will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Goal Progress Chart
+    try {
+        const progressCtx = document.getElementById('goalProgressChart').getContext('2d');
+        new Chart(progressCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ goal_names|safe }},
+                datasets: [{
+                    data: {{ goal_percentages|safe }},
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444',
+                        '#06b6d4', '#ec4899', '#6366f1', '#14b8a6', '#f97316'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value.toFixed(1)}% complete`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error creating progress chart:', error);
+    }
+    
+    // Savings Timeline Chart
+    try {
+        const timelineCtx = document.getElementById('savingsTimelineChart').getContext('2d');
+        new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ timeline_labels|safe }},
+                datasets: {{ timeline_datasets|safe }}
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error creating timeline chart:', error);
+    }
+    
+    // Completion Forecast Chart
+    try {
+        const forecastCtx = document.getElementById('completionForecastChart').getContext('2d');
+        new Chart(forecastCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ forecast_labels|safe }},
+                datasets: [{
+                    label: 'Expected Completion',
+                    data: {{ forecast_months|safe }},
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444',
+                        '#06b6d4', '#ec4899', '#6366f1', '#14b8a6', '#f97316'
+                    ],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Months to Complete'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error creating forecast chart:', error);
+    }
+
+    // Add this to your existing DOMContentLoaded event listener
+    let currentDisplayMonth = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                       "July", "August", "September", "October", "November", "December"];
+
+    // Function to render calendar
+    function renderCalendar(date) {
+        const calendarDays = document.getElementById('calendarDays');
+        const currentMonth = document.getElementById('currentMonth');
+        
+        // Update month display
+        currentMonth.textContent = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        
+        // Clear existing calendar
+        calendarDays.innerHTML = '';
+        
+        // Get first day of month and total days
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        const totalDays = lastDay.getDate();
+        
+        // Calculate offset for first day (0 = Monday in our grid)
+        let startOffset = firstDay.getDay() - 1;
+        if (startOffset === -1) startOffset = 6; // Sunday should be last
+        
+        // Add empty cells for offset
+        for (let i = 0; i < startOffset; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'p-2 border rounded bg-gray-50';
+            calendarDays.appendChild(emptyCell);
+        }
+        
+        // Add days
+        const today = new Date();
+        for (let day = 1; day <= totalDays; day++) {
+            const cell = document.createElement('div');
+            const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = today.getDate() === day && 
+                           today.getMonth() === date.getMonth() && 
+                           today.getFullYear() === date.getFullYear();
+            
+            cell.className = `border rounded p-2 relative ${isToday ? 'bg-blue-50 border-blue-200' : 'bg-white'}`;
+            
+            // Create day content
+            const dayContent = document.createElement('div');
+            dayContent.className = 'flex justify-between items-center';
+            
+            const dayNumber = document.createElement('span');
+            dayNumber.className = isToday ? 'font-bold text-blue-600' : '';
+            dayNumber.textContent = day;
+            dayContent.appendChild(dayNumber);
+            
+            // Check if this day has auto-debits
+            const dateData = window.calendarData?.[dateStr];
+            if (dateData) {
+                const indicator = document.createElement('span');
+                indicator.className = 'w-2 h-2 rounded-full bg-green-500';
+                dayContent.appendChild(indicator);
+                
+                // Add amount if exists
+                if (dateData.amount) {
+                    const amountDiv = document.createElement('div');
+                    amountDiv.className = 'mt-1 text-xs text-green-600';
+                    amountDiv.textContent = `₹${dateData.amount}`;
+                    cell.appendChild(amountDiv);
+                }
+            }
+            
+            cell.appendChild(dayContent);
+            calendarDays.appendChild(cell);
+        }
+    }
+
+    // Initialize calendar navigation
+    document.getElementById('prevMonth').addEventListener('click', () => {
+        currentDisplayMonth.setMonth(currentDisplayMonth.getMonth() - 1);
+        renderCalendar(currentDisplayMonth);
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', () => {
+        currentDisplayMonth.setMonth(currentDisplayMonth.getMonth() + 1);
+        renderCalendar(currentDisplayMonth);
+    });
+
+    // Parse calendar data from Django template
+    window.calendarData = JSON.parse('{{ calendar_data|escapejs }}');
+
+    // Initial render
+    renderCalendar(currentDisplayMonth);
+});
+</script>
+{% endblock %} 

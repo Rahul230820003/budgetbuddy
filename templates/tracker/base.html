@@ -1,0 +1,380 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Budget Buddy{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BudgetBuddy">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-152x152.png' %}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{% static 'icons/icon-152x152.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'icons/icon-192x192.png' %}">
+    <link rel="apple-touch-icon" sizes="167x167" href="{% static 'icons/icon-152x152.png' %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/icon-72x72.png' %}">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Time Display Script -->
+    <script>
+        function updateDateTime() {
+            const timeElement = document.getElementById('currentTime');
+            const dateElement = document.getElementById('currentDate');
+            
+            if (timeElement && dateElement) {
+                const now = new Date();
+                
+                // Update time
+                timeElement.textContent = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                
+                // Update date
+                dateElement.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
+    </script>
+    
+    <style>
+        canvas {
+            min-height: 300px;
+        }
+        
+        /* PWA Install Button Styles */
+        #installButton {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            #installButton.show-install {
+                display: block;
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                z-index: 1000;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            #installButton.show-install {
+                display: block;
+            }
+        }
+
+        /* Page Container Styles */
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: calc(100vh - 4rem);
+        }
+
+        /* Card Styles */
+        .custom-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .custom-card-header {
+            padding: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            background-color: white;
+            color: #1F2937;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3B82F6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563EB;
+        }
+
+        .btn-secondary {
+            background-color: #6B7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4B5563;
+        }
+
+        .btn-warning {
+            background-color: #F59E0B;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #D97706;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0d6efd',
+                        danger: '#dc3545'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    {% if user.is_authenticated %}
+    <nav class="bg-primary shadow-md mb-6">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <!-- Logo on the left -->
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="{% url 'dashboard' %}" class="flex items-center text-white font-bold text-xl">
+                        <i class="fas fa-piggy-bank mr-2 text-2xl"></i>
+                        Budget Buddy
+                    </a>
+                </div>
+
+                <!-- Center navigation -->
+                <div class="hidden md:flex md:items-center md:justify-center flex-1 px-8">
+                    <div class="flex space-x-4">
+                        <a href="{% url 'dashboard' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/dashboard/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-tachometer-alt mr-1"></i>Dashboard
+                        </a>
+                        <a href="{% url 'add_income' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/add-income/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-plus-circle mr-1"></i>Add Income
+                        </a>
+                        <a href="{% url 'add_expense' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/add-expense/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-minus-circle mr-1"></i>Add Expense
+                        </a>
+                        <a href="{% url 'transactions' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/transactions/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-list mr-1"></i>Transactions
+                        </a>
+                        <a href="{% url 'budget' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/budget/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-wallet mr-1"></i>Budget
+                        </a>
+                        <a href="{% url 'savings_goals' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/savings-goals/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-piggy-bank mr-1"></i>Goals
+                        </a>
+                        <a href="{% url 'recurring_transactions' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/recurring-transactions/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-sync-alt mr-1"></i>Recurring
+                        </a>
+                        <a href="{% url 'finance_insights' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/finance-insights/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-chart-bar mr-1"></i>Insights
+                        </a>
+                        <a href="{% url 'community' %}" class="text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm transition-colors duration-200 {% if request.path == '/community/' %}bg-blue-700{% endif %}">
+                            <i class="fas fa-users mr-1"></i>Community
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right side with time and profile -->
+                <div class="flex items-center space-x-4">
+                    <!-- Time and Date -->
+                    <div class="text-right bg-white/10 px-3 py-1 rounded-lg">
+                        <div id="currentTime" class="text-sm font-medium text-white"></div>
+                        <div id="currentDate" class="text-xs text-white/80"></div>
+                    </div>
+                    
+                    <!-- Profile Menu -->
+                    <div class="relative group">
+                        <button class="text-white hover:text-gray-200 focus:outline-none">
+                            <i class="fas fa-user-circle text-xl"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 transform opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 ease-out z-50">
+                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-red-600 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="page-container">
+        {% if messages %}
+        <div class="messages mb-6">
+            {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}bg-green-100 border-green-500 text-green-700{% elif message.tags == 'error' %}bg-red-100 border-red-500 text-red-700{% elif message.tags == 'warning' %}bg-yellow-100 border-yellow-500 text-yellow-700{% else %}bg-blue-100 border-blue-500 text-blue-700{% endif %} border-l-4 p-4 mb-3 rounded-r-lg" role="alert">
+                <p class="font-medium">{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Mobile Install Button -->
+    <button id="installButtonMobile" 
+            class="hidden fixed bottom-20 right-4 text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-full shadow-lg transition-colors z-50">
+        <i class="fas fa-download"></i>
+    </button>
+
+    <!-- Time Display Script -->
+    <script>
+        function updateDateTime() {
+            const timeElement = document.getElementById('currentTime');
+            const dateElement = document.getElementById('currentDate');
+            
+            if (timeElement && dateElement) {
+                const now = new Date();
+                
+                // Update time
+                timeElement.textContent = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                
+                // Update date
+                dateElement.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
+    </script>
+
+    <!-- PWA Install Scripts -->
+    <script>
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const installButtonMobile = document.getElementById('installButtonMobile');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install buttons
+            installButton.classList.add('show-install');
+            installButtonMobile.classList.remove('hidden');
+            
+            // Setup click handlers
+            const installApp = async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('App installed');
+                        installButton.classList.remove('show-install');
+                        installButtonMobile.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                }
+            };
+            
+            installButton.addEventListener('click', installApp);
+            installButtonMobile.addEventListener('click', installApp);
+        });
+
+        // Hide install buttons if app is already installed
+        window.addEventListener('appinstalled', () => {
+            installButton.classList.remove('show-install');
+            installButtonMobile.classList.add('hidden');
+            deferredPrompt = null;
+        });
+
+        // Check if running as standalone PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            installButton.classList.remove('show-install');
+            installButtonMobile.classList.add('hidden');
+        }
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{% static 'sw.js' %}")
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

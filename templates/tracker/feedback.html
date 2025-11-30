@@ -1,0 +1,126 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Feedback - BudgetBuddy{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-lg space-y-8">
+        <div class="bg-white shadow-2xl rounded-xl overflow-hidden border border-gray-100">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-6 text-center relative">
+                <h4 class="text-2xl font-bold text-white tracking-tight">Share Your Feedback</h4>
+                <p class="text-blue-100 text-sm mt-1">Help us improve BudgetBuddy</p>
+                <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 sm:p-8">
+                <form method="post" class="space-y-6" novalidate>
+                    {% csrf_token %}
+                    <!-- Name and Email -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 flex items-center">
+                                <i class="fas fa-user mr-2 text-gray-500"></i>
+                                Name
+                            </label>
+                            <input 
+                                type="text" 
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                id="name" 
+                                name="name" 
+                                required
+                            >
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700 flex items-center">
+                                <i class="fas fa-envelope mr-2 text-gray-500"></i>
+                                Email
+                            </label>
+                            <input 
+                                type="email" 
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                                id="email" 
+                                name="email" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Feedback Type -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 flex items-center">
+                            <i class="fas fa-comment mr-2 text-gray-500"></i>
+                            Feedback Type
+                        </label>
+                        <select 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200" 
+                            id="feedback_type" 
+                            name="feedback_type" 
+                            required
+                        >
+                            <option value="">Select type</option>
+                            <option value="suggestion">Suggestion</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 flex items-center">
+                            <i class="fas fa-pen mr-2 text-gray-500"></i>
+                            Your Feedback
+                        </label>
+                        <textarea 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-h-[120px]" 
+                            id="message" 
+                            name="message" 
+                            required 
+                            placeholder="Please share your thoughts..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Rating -->
+                    <div class="space-y-3 text-center">
+                        <label class="block text-sm font-medium text-gray-700">Rate Your Experience</label>
+                        <div class="flex justify-center gap-2">
+                            {% for i in "12345" %}
+                            <input 
+                                type="radio" 
+                                class="hidden peer" 
+                                name="rating" 
+                                id="rating{{ i }}" 
+                                value="{{ i }}" 
+                                required
+                            >
+                            <label 
+                                for="rating{{ i }}" 
+                                class="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 text-gray-600 cursor-pointer peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-blue-50 transition-all duration-200"
+                            >
+                                {{ i }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="text-center">
+                        <button 
+                            type="submit" 
+                            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg"
+                        >
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Feedback
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+          
+        </div>
+    </div>
+</div>
+{% endblock %}

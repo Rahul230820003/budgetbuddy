@@ -1,0 +1,194 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Edit Savings Goal - Income Tracker{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">{{ goal.name }}</h2>
+        
+        <!-- Goal Details -->
+        <div class="mb-6">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center mr-3 bg-blue-100">
+                    <i class="fas fa-piggy-bank text-xl text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">{{ goal.name }}</h3>
+                    <p class="text-sm text-gray-500">Created on {{ goal.created_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Target Amount:</span>
+                        <span class="font-medium">₹{{ goal.target_amount }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Current Savings:</span>
+                        <span class="font-medium">₹{{ goal.current_amount }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Remaining:</span>
+                        <span class="font-medium">₹{{ goal.remaining_amount }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Monthly Contribution:</span>
+                        <span class="font-medium">₹{{ goal.monthly_contribution }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Estimated Completion:</span>
+                        <span class="font-medium">
+                            {% if goal.estimated_completion_date %}
+                                {{ goal.estimated_completion_date|date:"M Y" }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-600">Target Date:</span>
+                        <span class="font-medium">
+                            {% if goal.target_date %}
+                                {{ goal.target_date|date:"M d, Y" }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                <div class="h-3 rounded-full bg-blue-600" 
+                    style="width: {{ goal.percentage_complete }}%"></div>
+            </div>
+            <div class="flex justify-between text-sm mb-4">
+                <span>{{ goal.percentage_complete|floatformat:1 }}% complete</span>
+                {% if goal.months_remaining %}
+                    <span>~{{ goal.months_remaining }} months left</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Add Funds Form -->
+        <div id="add-funds-section" class="border-t pt-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Add Funds to Your Goal</h3>
+            <form method="POST" action="{% url 'edit_savings_goal' goal.id %}">
+                {% csrf_token %}
+                <div class="grid md:grid-cols-3 gap-4 items-end">
+                    <div class="md:col-span-2">
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount to Add (₹)</label>
+                        <input type="number" id="amount" name="amount" min="0" step="0.01" required 
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <button type="submit" name="add_funds" class="w-full bg-green-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus-circle mr-2"></i>Add Funds
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Edit Goal Form -->
+        <div class="border-t pt-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Edit Goal Details</h3>
+            <form method="POST" action="{% url 'edit_savings_goal' goal.id %}">
+                {% csrf_token %}
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Goal Name</label>
+                        <input type="text" id="name" name="name" required value="{{ goal.name }}" 
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="target_amount" class="block text-sm font-medium text-gray-700 mb-1">Target Amount (₹)</label>
+                        <input type="number" id="target_amount" name="target_amount" min="0" step="0.01" required value="{{ goal.target_amount }}"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="monthly_contribution" class="block text-sm font-medium text-gray-700 mb-1">Monthly Contribution (₹)</label>
+                        <input type="number" id="monthly_contribution" name="monthly_contribution" min="0" step="0.01" required value="{{ goal.monthly_contribution }}"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="target_date" class="block text-sm font-medium text-gray-700 mb-1">Target Date (Optional)</label>
+                        <input type="date" id="target_date" name="target_date" value="{% if goal.target_date %}{{ goal.target_date|date:'Y-m-d' }}{% endif %}" 
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="debit_time" class="block text-sm font-medium text-gray-700 mb-1">Debit Time</label>
+                        <input type="time" id="debit_time" name="debit_time" value="{{ goal.debit_time|time:'H:i' }}"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                        <p class="text-xs text-gray-500 mt-1">The time when automatic debits will occur.</p>
+                    </div>
+                    <div>
+                        <label for="debit_day" class="block text-sm font-medium text-gray-700 mb-1">Debit Day</label>
+                        <select id="debit_day" name="debit_day" class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                            {% for i in range_1_31 %}
+                                <option value="{{ i }}" {% if goal.debit_day == i %}selected{% endif %}>
+                                    {{ i }}{% if i == 28 %} (Last day for February){% elif i == 30 %} (Last day for some months){% elif i == 31 %} (Only in 31-day months){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Day of month for automatic debits. For shorter months, the last day of that month will be used automatically.
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center">
+                    <input type="checkbox" id="auto_debit_enabled" name="auto_debit_enabled" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" {% if goal.auto_debit_enabled %}checked{% endif %}>
+                    <label for="auto_debit_enabled" class="ml-2 block text-sm text-gray-700">
+                        Enable automatic monthly deductions
+                    </label>
+                </div>
+                <div class="ml-6 mt-2 text-sm text-gray-600">
+                    <p><strong>How automatic deductions work:</strong></p>
+                    <p class="mt-1">When enabled, ₹{{ goal.monthly_contribution }} will be automatically debited on day {{ goal.debit_day }} 
+                    of each month at exactly {{ goal.debit_time|time:"g:i A" }}.</p>
+                    <p class="mt-1">For months with fewer than {{ goal.debit_day }} days, the debit will occur on the last day of that month.</p>
+                    <p class="mt-1">The amount will be immediately deducted from your account balance and added to your savings goal.</p>
+                    <p class="mt-1">You don't need to be logged in - the system will process it automatically.</p>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <div>
+                        <button type="submit" name="update_goal" class="bg-primary text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'savings_goals' %}" class="ml-2 bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </a>
+                    </div>
+                    <div>
+                        {% if not goal.completed %}
+                        <button type="submit" name="complete_goal" class="bg-green-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>Mark as Complete
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    {% if add_funds_focus %}
+    // Scroll to the add funds section on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const addFundsSection = document.getElementById('add-funds-section');
+        if (addFundsSection) {
+            addFundsSection.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('amount').focus();
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %} 

@@ -1,0 +1,167 @@
+BudgetBuddy - MySQL Migration Guide
+=================================
+
+1. Prerequisites
+---------------
+- MySQL Server installed and running
+- Python MySQL client (mysqlclient) package
+- Existing Django project with SQLite database
+- Backup of current database
+
+2. Install Required Packages
+--------------------------
+1. Install mysqlclient package:
+   ```bash
+   pip install mysqlclient
+   ```
+
+2. Install MySQL Server if not already installed:
+   - Windows: Download MySQL Installer from mysql.com
+   - Linux: `sudo apt-get install mysql-server`
+   - macOS: `brew install mysql`
+
+3. Create MySQL Database
+---------------------
+1. Log in to MySQL:
+   ```bash
+   mysql -u root -p
+   ```
+
+2. Create new database:
+   ```sql
+   CREATE DATABASE budgetbuddy CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+3. Create database user:
+   ```sql
+   CREATE USER 'budgetbuddy_user'@'localhost' IDENTIFIED BY 'your_password';
+   ```
+
+4. Grant privileges:
+   ```sql
+   GRANT ALL PRIVILEGES ON budgetbuddy.* TO 'budgetbuddy_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+4. Update Django Settings
+----------------------
+1. Open settings.py and update DATABASES configuration:
+   ```python
+   DATABASES = {
+       'default': {
+           'ENGINE': 'django.db.backends.mysql',
+           'NAME': 'budgetbuddy',
+           'USER': 'budgetbuddy_user',
+           'PASSWORD': 'your_password',
+           'HOST': 'localhost',
+           'PORT': '3306',
+           'OPTIONS': {
+               'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+               'charset': 'utf8mb4',
+           }
+       }
+   }
+   ```
+
+5. Backup Current Data
+--------------------
+1. Create a backup of your current database:
+   ```bash
+   python manage.py dumpdata > backup.json
+   ```
+
+6. Migrate Database
+-----------------
+1. Create new migrations:
+   ```bash
+   python manage.py makemigrations
+   ```
+
+2. Apply migrations to MySQL:
+   ```bash
+   python manage.py migrate
+   ```
+
+3. Load backup data:
+   ```bash
+   python manage.py loaddata backup.json
+   ```
+
+7. Verify Migration
+-----------------
+1. Test database connection:
+   ```bash
+   python manage.py dbshell
+   ```
+
+2. Check if tables are created:
+   ```sql
+   SHOW TABLES;
+   ```
+
+3. Verify data integrity:
+   ```bash
+   python manage.py check
+   ```
+
+8. Troubleshooting
+----------------
+Common Issues and Solutions:
+
+1. Character Encoding Issues:
+   - Ensure MySQL is using utf8mb4
+   - Add 'charset': 'utf8mb4' to DATABASES OPTIONS
+
+2. Connection Errors:
+   - Verify MySQL server is running
+   - Check user credentials
+   - Ensure firewall allows MySQL connections
+
+3. Migration Errors:
+   - Check MySQL version compatibility
+   - Verify all required packages are installed
+   - Review Django and MySQL logs
+
+9. Performance Optimization
+------------------------
+1. Add these settings to settings.py:
+   ```python
+   DATABASES['default']['OPTIONS'].update({
+       'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+       'charset': 'utf8mb4',
+       'use_unicode': True,
+   })
+   ```
+
+2. Configure MySQL for better performance:
+   ```sql
+   SET GLOBAL innodb_buffer_pool_size = 1G;
+   SET GLOBAL innodb_log_file_size = 256M;
+   ```
+
+10. Maintenance
+-------------
+1. Regular backups:
+   ```bash
+   mysqldump -u budgetbuddy_user -p budgetbuddy > backup.sql
+   ```
+
+2. Database optimization:
+   ```sql
+   OPTIMIZE TABLE table_name;
+   ```
+
+3. Monitor performance:
+   ```sql
+   SHOW STATUS LIKE 'Innodb%';
+   ```
+
+Important Notes:
+--------------
+- Always backup your data before migration
+- Test the migration in a development environment first
+- Keep your database credentials secure
+- Monitor database performance after migration
+- Consider using environment variables for sensitive data
+
+This guide provides a comprehensive approach to migrating your BudgetBuddy application from SQLite to MySQL while maintaining data integrity and optimizing performance. 

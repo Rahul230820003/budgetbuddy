@@ -1,0 +1,39 @@
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.progress {
+    height: 20px;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+.table th {
+    background-color: #f8f9fa;
+}
+
+.alert {
+    margin-bottom: 1rem;
+}
+
+.footer {
+    margin-top: auto;
+    padding: 1rem 0;
+    background-color: #f8f9fa;
+}
+
+.quick-actions .btn {
+    margin-bottom: 0.5rem;
+}
+
+.transaction-badge {
+    min-width: 80px;
+    text-align: center;
+}
